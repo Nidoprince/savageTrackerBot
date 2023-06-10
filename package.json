@@ -1,0 +1,14 @@
+{
+  "name": "savage-tracker",
+  "version": "1.0.0",
+  "description": "Bot for tracking initiative, wounds, and bennys.",
+  "main": "savageTracker.js",
+  "author": "Micah Mahlke Workman",
+  "dependencies": {
+    "discord.js": "^14.6.0"
+  },
+  "scripts": {
+    "start": "node savageTracker.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
