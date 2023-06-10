@@ -537,6 +537,10 @@ bot.on("messageCreate", (message) =>
         message.channel.send(output)
       }
     }
+    if(commandArgs[0] == "shuffle"){
+      exports.deck.shuffle()
+      message.channel.send("Deck shuffled.")
+    }
   }
 })
 
