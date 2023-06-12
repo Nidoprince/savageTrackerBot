@@ -117,8 +117,10 @@ bot.on('ready', () =>
       })
       .catch(console.error)
   }
-  exports.deck = new Deck()
-  rem = [...exports.deck.getRemains].sort((x,y) => ordinalCard(x)-ordinalCard(y))
+  exports.deck = {"test": new Deck()}
+  rem = [...exports.deck.test.getRemains].sort((x,y) => ordinalCard(x)-ordinalCard(y))
+  exports.combatants = {}
+  exports.round = {}
   console.log(rem)
 })
 
@@ -171,6 +173,7 @@ bot.on("messageCreate", (message) =>
   if(message.content.substring(0,1) == "/") //Checks if the first letter of a message is a /
   {
     let commandArgs = message.content.substring(1).split(/\s+/) //Removes the ! and then breaks the rest of the message apart into chunks based on whitespace
+    let where = message.channel.id
 
     if(commandArgs[0] == "character"){
       if(commandArgs.length == 1){
@@ -354,42 +357,57 @@ bot.on("messageCreate", (message) =>
 
     if(commandArgs[0] == "combat")
     {
-      exports.deck = new Deck();
-      exports.combatants = []
-      exports.round = 0
+      exports.deck[where] = new Deck();
+      exports.combatants[where] = []
+      exports.round[where] = 0
       for (let c of commandArgs.slice(1))
       {
-        exports.combatants.push({'name': c})
+        exports.combatants[where].push({'name': c})
       }
       var output = "Combat started with "
-      for (let c of exports.combatants)
+      for (let c of exports.combatants[where])
       {
         output += c.name+", "
       }
       message.channel.send(output)
-      //message.channel.send(exports.deck.draw())
     }
+
+    if(commandArgs[0] == "end"){
+      if(!(where in exports.combatants)){
+        message.channel.send("No combat to end.")
+      }
+      else{
+        delete exports.combatants[where]
+        delete exports.deck[where]
+        delete exports.round[where]
+        message.channel.send("Combat ended.")
+      }
+    }
+
     if(commandArgs[0] == "add")
     {
       if(commandArgs.length == 1){
         message.channel.send("Please enter name of new combatant.")
+      }
+      else if(!(where in exports.combatants)){
+        message.channel.send("You must start a combat before you can add a combatant to it.")
       }
       else{
         name = commandArgs[1]
 
         if(commandArgs.length == 2 || commandArgs[2] != "now"){
           message.channel.send(""+name+" added to next round.")
-          exports.combatants.push({'name': name})
+          exports.combatants[where].push({'name': name})
         }
         else{
-          card = exports.deck.draw()
+          card = exports.deck[where].draw()
           if(card == false){
             message.channel.send("Deck shuffled because of lack of cards.")
-            exports.deck.shuffle()
-            card = exports.deck.draw()
+            exports.deck[where].shuffle()
+            card = exports.deck[where].draw()
           }
-          exports.combatants.push({'name': name,'cards':[card]})
-          output = displayInitiative(exports.combatants,exports.round)
+          exports.combatants[where].push({'name': name,'cards':[card]})
+          output = displayInitiative(exports.combatants[where],exports.round[where])
           message.channel.send(output)
         }
       }
@@ -399,13 +417,16 @@ bot.on("messageCreate", (message) =>
       if(commandArgs.length == 1){
         message.channel.send("Please enter name of combatant(s) to remove.")
       }
+      else if(!(where in exports.combatants)){
+        message.channel.send("You must start a combat before you can remove a combatant from it.")
+      }
       else{
         names = commandArgs.slice(1)
         namesRemoved = []
         namesNotRemoved = []
         for (let n of names){
-          if(exports.combatants.map((x) => x.name).includes(n)){
-            exports.combatants = exports.combatants.filter((x) => x.name != n)
+          if(exports.combatants[where].map((x) => x.name).includes(n)){
+            exports.combatants[where] = exports.combatants[where].filter((x) => x.name != n)
             namesRemoved.push(n)
           }
           else{
@@ -430,24 +451,24 @@ bot.on("messageCreate", (message) =>
     }
     if(commandArgs[0] == "round")
     {
-      if(exports.combatants.length == 0)
+      if(!(where in exports.combatants) || exports.combatants[where].length == 0)
       {
         message.channel.send("Start combat with combatants before starting round.")
       }
       else {
-        if(!exports.deck.jokers()){
-          exports.deck.shuffle()
+        if(!exports.deck[where].jokers()){
+          exports.deck[where].shuffle()
           message.channel.send("Deck shuffled before round because Joker drawn last round.")
         }
-        if(exports.deck.getRemains.length < exports.combatants.length){
-          exports.deck.shuffle()
+        if(exports.deck[where].getRemains.length < exports.combatants[where].length){
+          exports.deck[where].shuffle()
           message.channel.send("Deck shuffled before round because deck lacked cards for every combatant.")
         }
-        exports.round += 1
-        for (let c of exports.combatants){
-          c.cards = [exports.deck.draw()]
+        exports.round[where] += 1
+        for (let c of exports.combatants[where]){
+          c.cards = [exports.deck[where].draw()]
         }
-        output = displayInitiative(exports.combatants,exports.round)
+        output = displayInitiative(exports.combatants[where],exports.round[where])
         message.channel.send(output)
       }
     }
@@ -457,19 +478,22 @@ bot.on("messageCreate", (message) =>
       {
         message.channel.send("Please include which combatant and the note.")
       }
+      else if(!(where in exports.combatants)){
+        message.channel.send("You must start a combat before you can add a note to a combatant.")
+      }
       else {
         recipient = commandArgs[1]
         note = ""
         if(commandArgs.length > 2){
           note = commandArgs.slice(2).join(" ")
         }
-        if(exports.combatants.map((x) => x.name).includes(recipient)){
-          loc = exports.combatants.findIndex((x) => x.name == recipient)
-          exports.combatants[loc].note = note
+        if(exports.combatants[where].map((x) => x.name).includes(recipient)){
+          loc = exports.combatants[where].findIndex((x) => x.name == recipient)
+          exports.combatants[where][loc].note = note
           if(note.length == 0){
-            delete exports.combatants[loc].note
+            delete exports.combatants[where][loc].note
           }
-          output = displayInitiative(exports.combatants,exports.round)
+          output = displayInitiative(exports.combatants[where],exports.round[where])
           message.channel.send(output)
         }
         else{
@@ -483,6 +507,9 @@ bot.on("messageCreate", (message) =>
       {
         message.channel.send("Enter how many cards to draw then optionally who draws them.")
       }
+      else if(!(where in exports.combatants)){
+        message.channel.send("You must start a combat before you can draw cards.")
+      }
       else {
         numDraws = Number(commandArgs[1])
         console.log(numDraws)
@@ -492,16 +519,16 @@ bot.on("messageCreate", (message) =>
         else if(numDraws > 10){
           message.channel.send("You can't draw more than 10 cards at once.")
         }
-        else if(commandArgs.length > 2 && !(exports.combatants.map((x) => x.name)).includes(commandArgs[2])){
+        else if(commandArgs.length > 2 && !(exports.combatants[where].map((x) => x.name)).includes(commandArgs[2])){
           message.channel.send("No cards drawn because name not found in iniative.")
         }
         else{
           draws = []
           for(let i = 0; i < numDraws; i++){
-            draw = exports.deck.draw()
+            draw = exports.deck[where].draw()
             if(!draw){
-              exports.deck.shuffle()
-              draw = exports.deck.draw()
+              exports.deck[where].shuffle()
+              draw = exports.deck[where].draw()
               message.channel.send("Deck shuffled because it ran out of cards.")
             }
             draws.push(draw)
@@ -514,35 +541,41 @@ bot.on("messageCreate", (message) =>
             message.channel.send(output)
           }
           else{
-            loc = exports.combatants.findIndex((x) => x.name == commandArgs[2])
-            cards = exports.combatants[loc].cards
+            loc = exports.combatants[where].findIndex((x) => x.name == commandArgs[2])
+            cards = exports.combatants[where][loc].cards
             for(let c of draws) {
               cards.push(c)
             }
             cards.sort((x,y) => ordinalCard(y) - ordinalCard(x))
-            exports.combatants[loc].cards = cards
-            output = displayInitiative(exports.combatants,exports.round)
+            exports.combatants[where][loc].cards = cards
+            output = displayInitiative(exports.combatants[where],exports.round[where])
             message.channel.send(output)
           }
         }
       }
     }
     if(commandArgs[0] == "current"){
-      if(exports.combatants.length == 0)
+      if(!(where in exports.combatants) || exports.combatants[where].length == 0)
       {
         message.channel.send("Start combat with combatants before checking round.")
       }
       else {
-        output = displayInitiative(exports.combatants,exports.round)
+        output = displayInitiative(exports.combatants[where],exports.round[where])
         message.channel.send(output)
       }
     }
     if(commandArgs[0] == "shuffle"){
-      exports.deck.shuffle()
-      message.channel.send("Deck shuffled.")
+      if(!(where in exports.combatants)){
+        message.channel.send("You must start a combat before you can shuffle the deck.")
+      }
+      else{
+        exports.deck[where].shuffle()
+        message.channel.send("Deck shuffled.")
+      }
     }
   }
 })
 
 // Log our bot in
+console.log(token)
 bot.login(token);
