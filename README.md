@@ -22,6 +22,12 @@ Commands:
   - /wounds reset all - Sets all characters number of wounds to 0.
   - /wounds reset \<name1> \<name2> ... - Sets all characters listed's wounds to 0.
 
+- /xp - command for adding, removing, or resetting xp.
+  - /xp add \<number> \<name> - Adds the specified number of xp to the character with the specified name.
+  - /xp remove \<number> \<name> - Removes the specified number of xp from the character with the specified name.
+  - /xp reset all - Sets all characters amount of xp to 0.
+  - /xp reset \<name1> \<name2> ... - Sets all characters listed's xp to 0.
+
 - /combat \<name1> \<name2> ... - Shuffles the deck and prepares to start a combat with the listed names.
 - /end - Ends current combat.
 - /round - Deals out the cards to all characters currently in combat and displays the initiative order, round number, and any notes.

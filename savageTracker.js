@@ -106,6 +106,14 @@ bot.on('ready', () =>
                   characterData.name = cInfo[0]
                   characterData.bennys = cInfo[1]
                   characterData.wounds = cInfo[2]
+                  characterData.xp = 0
+                  characterInfo.push(characterData)
+                }
+                else if(cInfo.length == 4){
+                  characterData.name = cInfo[0]
+                  characterData.bennys = cInfo[1]
+                  characterData.wounds = cInfo[2]
+                  characterData.xp = cInfo[3]
                   characterInfo.push(characterData)
                 }
               }
@@ -137,7 +145,7 @@ function updateStorageMessage(guildId){
       myMessages = messages.filter((m) => m.author.id == bot.user.id)
       updatedMessage = "Wound and Benny Storage Message"
       for (let character of info){
-        updatedMessage += "\n"+character.name+" "+character.bennys+" "+character.wounds
+        updatedMessage += "\n"+character.name+" "+character.bennys+" "+character.wounds+" "+character.xp
       }
       if(myMessages.size == 0){
         c.infoChannel.send(updatedMessage)
@@ -184,7 +192,7 @@ bot.on("messageCreate", (message) =>
           message.channel.send("Please specify name of new character and optionally bennys and wounds")
         }
         else {
-          newChar = {bennys: 3, wounds: 0}
+          newChar = {bennys: 3, wounds: 0, xp: 0}
           newChar.name = commandArgs[2]
           if(commandArgs.length > 3){
             newChar.bennys = commandArgs[3]
@@ -192,11 +200,14 @@ bot.on("messageCreate", (message) =>
           if(commandArgs.length > 4){
             newChar.wounds = commandArgs[4]
           }
+          if(commandArgs.length > 5){
+            newChar.xp = commandArgs[5]
+          }
           allInfoIndex = exports.infoList.findIndex((x) => x.guild == message.guild.id)
           infoList = exports.infoList[allInfoIndex].info
           infoList.push(newChar)
           exports.infoList[allInfoIndex].info = infoList
-          message.channel.send("New character added with name: "+newChar.name+" bennys: "+newChar.bennys+" and wounds: "+newChar.wounds)
+          message.channel.send("New character added with name: "+newChar.name+" bennys: "+newChar.bennys+" wounds: "+newChar.wounds+" and xp: "+newChar.xp)
           updateStorageMessage(message.guild.id)
         }
       }
@@ -223,7 +234,7 @@ bot.on("messageCreate", (message) =>
         infoList = exports.infoList[allInfoIndex].info
         output = "Characters:"
         for(let c of infoList){
-          output += "\n"+c.name+" - Bennys: "+c.bennys+" - Wounds: "+c.wounds
+          output += "\n"+c.name+" - Bennys: "+c.bennys+" - Wounds: "+c.wounds+" - XP: "+c.xp
         }
         message.channel.send(output)
       }
@@ -232,7 +243,7 @@ bot.on("messageCreate", (message) =>
       }
     }
 
-    if(commandArgs[0] == "bennys" || commandArgs[0] == "wounds")
+    if(commandArgs[0] == "bennys" || commandArgs[0] == "wounds" || commandArgs[0] == "xp")
     {
       whichStat = commandArgs[0]
       if(commandArgs.length == 1){
