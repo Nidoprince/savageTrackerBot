@@ -6,7 +6,7 @@ In order to store bennys and wounds between sessions, this bot needs its own cha
 Commands:
 
 - /character - commands for adding, removing, or listing characters to store between sessions.
-  - /character add \<name> \<bennys> \<wounds> - Adds a new character with the specified name, amount of bennys, and amount of wounds.  If unspecified, bennys will be 3 and wounds will be 0.
+  - /character add \<name> \<bennys> \<wounds> \<xp> - Adds a new character with the specified name, amount of bennys, amount of wounds, and amount of xp.  If unspecified, bennys will be 3, wounds will be 0 and xp will be 0.
   - /character remove \<name> - Removes a character from the storage with the specified name.
   - /character list - Lists all the characters stored on the server with their number of bennys and wounds.
 
